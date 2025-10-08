@@ -52,14 +52,17 @@ app = FastAPI(
     title="Family Search OCR - AI System",
     description="Sistema de IA para análise de documentos antigos em italiano",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    # Configuração para upload de arquivos grandes
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 app.add_middleware(CORBMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1", "http://localhost:80", "http://127.0.0.1"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:80", "http://127.0.0.1:80"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -71,9 +74,27 @@ app.include_router(documents.router)
 app.include_router(corrections.router)
 app.include_router(ai.router)
 
+# Middleware para servir imagens com CORS
+class StaticFilesWithCORS(StaticFiles):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    async def __call__(self, scope, receive, send):
+        async def send_with_cors(message):
+            if message["type"] == "http.response.start":
+                message["headers"].extend([
+                    (b"access-control-allow-origin", b"*"),
+                    (b"access-control-allow-methods", b"GET, OPTIONS"),
+                    (b"access-control-allow-headers", b"*"),
+                    (b"x-content-type-options", b"nosniff"),
+                ])
+            await send(message)
+        
+        await super().__call__(scope, receive, send_with_cors)
+
 app.mount(
     "/preprocessed-images",
-    StaticFiles(directory="./uploads/preprocessed"),
+    StaticFilesWithCORS(directory="./uploads/preprocessed"),
     name="preprocessed-images"
 )
 
