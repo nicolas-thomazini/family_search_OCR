@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     
     # File Upload
     UPLOAD_DIR: str = "./uploads"
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
     
     # Training
     BATCH_SIZE: int = 8
