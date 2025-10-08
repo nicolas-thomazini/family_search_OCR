@@ -21,5 +21,5 @@ COPY backend/ .
 # Exponha a porta padrão do FastAPI
 EXPOSE 8000
 
-# Comando padrão para rodar a API
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Comando padrão para rodar a API com configurações para uploads grandes
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--limit-concurrency", "1000", "--timeout-keep-alive", "300"] 
