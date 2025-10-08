@@ -10,7 +10,7 @@ import type {
 } from '../types';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiService {
     private api: AxiosInstance;
@@ -61,12 +61,12 @@ class ApiService {
 
     // Documents
     async getDocuments(page = 1, limit = 10): Promise<PaginatedResponse<Document>> {
-        const response = await this.api.get(`/documents?page=${page}&limit=${limit}`);
+        const response = await this.api.get(`/documents/?page=${page}&limit=${limit}`);
         return response.data;
     }
 
     async getDocument(id: string): Promise<Document> {
-        const response = await this.api.get(`/documents/${id}`);
+        const response = await this.api.get(`/documents/${id}/`);
         return response.data;
     }
 
