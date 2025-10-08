@@ -69,6 +69,7 @@ export interface UploadProgress {
     progress: number;
     status: 'uploading' | 'processing' | 'completed' | 'error';
     error?: string;
+    message?: string;
 }
 
 // Statistics types
