@@ -27,13 +27,26 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete, className = '
                 { file, description: `Uploaded: ${file.name}` },
                 {
                     onSuccess: (document) => {
+                        // Primeiro mostra que o upload foi concluído
                         setUploadProgress(prev =>
                             prev.map(p =>
                                 p.file === file
-                                    ? { ...p, status: 'completed', progress: 100 }
+                                    ? { ...p, status: 'processing', progress: 50, message: 'Processando OCR...' }
                                     : p
                             )
                         );
+                        
+                        // Aguarda um pouco e verifica o status do documento
+                        setTimeout(() => {
+                            setUploadProgress(prev =>
+                                prev.map(p =>
+                                    p.file === file
+                                        ? { ...p, status: 'completed', progress: 100, message: 'Concluído!' }
+                                        : p
+                                )
+                            );
+                        }, 2000);
+                        
                         onUploadComplete?.(document.id);
                     },
                     onError: (error) => {
@@ -131,12 +144,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadComplete, className = '
                                 </div>
                             </div>
 
-                            {progress.status === 'uploading' && (
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${progress.progress}%` }}
-                                    />
+                            {(progress.status === 'uploading' || progress.status === 'processing') && (
+                                <div className="space-y-2">
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                            className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                                            style={{ width: `${progress.progress}%` }}
+                                        />
+                                    </div>
+                                    {progress.message && (
+                                        <p className="text-xs text-gray-600">
+                                            {progress.message}
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
