@@ -22,7 +22,7 @@ async def upload_document(
     db: Session = Depends(get_db)
 ):
     """
-    Faz upload de um documento para processamento
+    Faz upload de um documento e processa automaticamente com OCR
     """
     if not file.content_type.startswith('image/'):
         raise HTTPException(status_code=400, detail="Apenas arquivos de imagem são aceitos")
@@ -47,6 +47,39 @@ async def upload_document(
     db.refresh(document)
     
     logger.info(f"Documento enviado: {document.id} - {filename}")
+    
+    # Processar automaticamente com OCR
+    try:
+        logger.info(f"Iniciando processamento automático do documento {document.id}")
+        
+        document.status = "processing"
+        db.commit()
+        
+        ocr_result = ocr_service.extract_text(document.original_path, force_reprocess=True)
+        
+        existing_results = db.query(OCRResult).filter(OCRResult.document_id == document.id).all()
+        for result in existing_results:
+            db.delete(result)
+        
+        db_result = OCRResult(
+            document_id=document.id,
+            text_extracted=ocr_result['text'],
+            confidence_score=ocr_result['confidence']
+        )
+        db.add(db_result)
+        
+        document.status = "completed"
+        document.processed_path = ocr_result.get('preprocessed_path')
+        db.commit()
+        
+        logger.info(f"Processamento automático concluído para documento {document.id} com confiança {ocr_result['confidence']:.2f}")
+        
+    except Exception as e:
+        logger.error(f"Erro no processamento automático do documento {document.id}: {str(e)}")
+        document.status = "error"
+        db.commit()
+        # Não falha o upload, apenas registra o erro
+    
     return document
 
 @router.post("/{document_id}/process", response_model=OCRResponse)
